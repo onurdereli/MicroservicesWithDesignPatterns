@@ -6,8 +6,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using Microsoft.EntityFrameworkCore;
-using Shared;
-using Stock.API.Consumers;
 using Stock.API.Models;
 using Stock.API.Services.Abstract;
 using Stock.API.Services.Concrete;
@@ -28,26 +26,12 @@ namespace Stock.API
         {
             services.AddMassTransit(x =>
             {
-                x.AddConsumer<OrderCreatedEventConsumer>();
-
-                x.AddConsumer<PaymentFailedEventConsumer>();
-
                 x.UsingRabbitMq((context, cfg) =>
                 {
                     cfg.Host(Configuration["RabbitMQUrl"], "/", host =>
                     {
                         host.Username("guest");
                         host.Password("guest");
-                    });
-
-                    cfg.ReceiveEndpoint(RabbitMqSettingsConst.StockOrderCreatedEventQueueName, e =>
-                    {
-                        e.ConfigureConsumer<OrderCreatedEventConsumer>(context);
-                    });
-
-                    cfg.ReceiveEndpoint(RabbitMqSettingsConst.StockPaymentFailedEventQueueName, e =>
-                    {
-                        e.ConfigureConsumer<PaymentFailedEventConsumer>(context);
                     });
                 });
             });
