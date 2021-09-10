@@ -3,6 +3,7 @@ using Automatonymous;
 using Shared;
 using Shared.Events.Abstract;
 using Shared.Events.Concrete;
+using Shared.Messages.Concrete;
 
 namespace SagaStateMachineWorkerService.Models
 {
@@ -10,11 +11,15 @@ namespace SagaStateMachineWorkerService.Models
     {
         public Event<IOrderCreatedRequestEvent> OrderCreatedRequestEvent { get; set; }
         public Event<IStockReservedEvent> StockReservedEvent { get; set; }
+        public Event<IStockNotReservedEvent> StockNotReservedEvent { get; set; }
         public Event<IPaymentCompletedEvent> PaymentCompletedEvent { get; set; }
+        public Event<IPaymentFailedEvent> PaymentFailedEvent { get; set; }
 
         public State OrderCreated { get; set; }
         public State StockReserved { get; set; }
+        public State StockNotReserved { get; set; }
         public State PaymentCompleted { get; set; }
+        public State PaymentFailed { get; set; }
 
         //İlk eventte her zaman business işlemlerinden sonra initial state'i OrderCreated state'ine geçmesi için yapılan işlemler
         public OrderStateMachine()
@@ -30,8 +35,14 @@ namespace SagaStateMachineWorkerService.Models
             // StockReservedEvent'i dinleniyorsa veritabanındaki hangi satıra ait olduğunu alır
             Event(() => StockReservedEvent, x => x.CorrelateById(y => y.Message.CorrelationId));
 
+            // StockNotReservedEvent'i dinleniyorsa veritabanındaki hangi satıra ait olduğunu alır
+            Event(() => StockNotReservedEvent, x => x.CorrelateById(y => y.Message.CorrelationId));
+
             // PaymentCompletedEvent'i dinleniyorsa veritabanındaki hangi satıra ait olduğunu alır
             Event(() => PaymentCompletedEvent, x => x.CorrelateById(y => y.Message.CorrelationId));
+
+            // PaymentFailedEvent'i dinleniyorsa veritabanındaki hangi satıra ait olduğunu alır
+            Event(() => PaymentFailedEvent, x => x.CorrelateById(y => y.Message.CorrelationId));
 
             //OrderCreatedRequestEvent eventi tetiklendiğinde datalar ile dbye kayıt atılıp state'i orderCreated olacak
             Initially(
@@ -81,15 +92,45 @@ namespace SagaStateMachineWorkerService.Models
                         },
                         BuyerId = context.Instance.BuyerId
                     })
-                    .Then(context => { Console.WriteLine($"StockReservedEvent After : {context.Instance}"); }));
+                    .Then(context =>
+                    {
+                        Console.WriteLine($"StockReservedEvent After : {context.Instance}");
+                    }),
+                When(StockNotReservedEvent)
 
+                    .TransitionTo(StockNotReserved)
+                    .Publish(context => new OrderRequestFailedEvent { OrderId = context.Instance.OrderId, Reason = context.Data.Reason })
+                    .Then(context =>
+                    {
+                        Console.WriteLine($"StockNotReservedEvent After : {context.Instance}");
+                    })
+                );
+
+            //When; işlemi birden fazla koşul gerektiğinden koşulları belirtir
+            //TransitionTo; bir sonraki state'i belirtir
+            //publish ve send işlemlerinde send belirli bir queue'ya gönderme işlemleri için gerekli. Örn; ödeme işlemini tek bi queue dinlemesi gerektiğinden dolayı sadece send kullanılabilir
+            //Finalize; Ödeme tamamlandı state'ine gelince Masstransitin saga implementasyonundaki default final adımına geçmesini sağlar
             During(StockReserved,
                 When(PaymentCompletedEvent)
                     .TransitionTo(PaymentCompleted)
                     .Publish(context => new OrderRequestCompletedEvent { OrderId = context.Instance.OrderId })
-                    .Then(context => { Console.WriteLine($"PaymentCompletedEvent After : {context.Instance}"); })
-                    .Finalize()
-                );
+                    .Then(context =>
+                    {
+                        Console.WriteLine($"PaymentCompletedEvent After : {context.Instance}");
+                    })
+                    .Finalize(),
+                When(PaymentFailedEvent)
+                    .Publish(context => new OrderRequestFailedEvent {OrderId = context.Instance.OrderId, Reason = context.Data.Reason})
+                    .Send(new Uri($"queue:{RabbitMqSettingsConst.OrderRequestFailedEventQueueName}"), context => new StockRollbackMessage {OrderItems = context.Data.OrderItems})
+                    .TransitionTo(PaymentFailed)
+                    .Then(context =>
+                    {
+                        Console.WriteLine($"OrderRequestFailedEvent After : {context.Instance}");
+                    })
+            );
+
+            // Bitmiş bütün mesajları temizler dbden siler
+            SetCompletedWhenFinalized();
         }
     }
 }

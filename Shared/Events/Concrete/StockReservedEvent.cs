@@ -6,13 +6,13 @@ namespace Shared.Events.Concrete
 {
     public class StockReservedEvent: IStockReservedEvent
     {
-        public List<OrderItemMessage> OrderItems { get; set; }
-
         public StockReservedEvent(Guid correlationId)
         {
             CorrelationId = correlationId;
         }
 
+        public List<OrderItemMessage> OrderItems { get; set; }
+        
         public Guid CorrelationId { get; }
     }
 }
