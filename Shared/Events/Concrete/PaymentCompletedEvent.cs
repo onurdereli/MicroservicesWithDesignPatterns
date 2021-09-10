@@ -1,11 +1,15 @@
-﻿using Shared.Events.Abstract;
+﻿using System;
+using Shared.Events.Abstract;
 
 namespace Shared.Events.Concrete
 {
     public class PaymentCompletedEvent : IPaymentCompletedEvent
     {
-        public int OrderId { get; set; }
+        public PaymentCompletedEvent(Guid correlationId)
+        {
+            CorrelationId = correlationId;
+        }
 
-        public string BuyerId { get; set; }
+        public Guid CorrelationId { get; }
     }
 }

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using Automatonymous;
@@ -37,7 +36,7 @@ namespace SagaStateMachineWorkerService.Models
             properties.ToList().ForEach(p =>
             {
                 var value = p.GetValue(this, null);
-                stringBuilder.Append($"{p.Name}:{value}");
+                stringBuilder.AppendLine($"{p.Name}:{value}");
             });
 
             stringBuilder.Append("------------");

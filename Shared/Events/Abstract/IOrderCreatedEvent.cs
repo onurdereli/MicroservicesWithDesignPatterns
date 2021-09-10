@@ -1,15 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using MassTransit;
 
 namespace Shared.Events.Abstract
 {
-    public interface IOrderCreatedEvent
+    public interface IOrderCreatedEvent: CorrelatedBy<Guid>
     {
-        public int  OrderId { get; set; }
-
-        public string BuyerId { get; set; }
-
-        public PaymentMessage Payment { get; set; }
-
         public List<OrderItemMessage> OrderItems { get; set; }
     }
 }

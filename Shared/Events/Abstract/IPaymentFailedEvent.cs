@@ -1,14 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using MassTransit;
 
 namespace Shared.Events.Abstract
 {
-    public interface IPaymentFailedEvent
+    public interface IPaymentFailedEvent: CorrelatedBy<Guid>
     {
-        public int OrderId { get; set; }
-
-        public string BuyerId { get; set; }
-
-        public string Message { get; set; }
+        public string Reason { get; set; }
 
         public List<OrderItemMessage> OrderItems { get; set; }
     }

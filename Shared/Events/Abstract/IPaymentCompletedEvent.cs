@@ -1,9 +1,10 @@
-﻿namespace Shared.Events.Abstract
-{
-    public interface IPaymentCompletedEvent
-    {
-        public int OrderId { get; set; }
+﻿using System;
+using MassTransit;
 
-        public string BuyerId { get; set; }
+namespace Shared.Events.Abstract
+{
+    public interface IPaymentCompletedEvent: CorrelatedBy<Guid>
+    {
+
     }
 }

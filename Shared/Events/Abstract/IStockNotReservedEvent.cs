@@ -1,9 +1,10 @@
-﻿namespace Shared.Events.Abstract
-{
-    public interface IStockNotReservedEvent
-    {
-        public int OrderId { get; set; }
+﻿using System;
+using MassTransit;
 
-        public string Message { get; set; }
+namespace Shared.Events.Abstract
+{
+    public interface IStockNotReservedEvent: CorrelatedBy<Guid>
+    {
+        public string Reason { get; set; }
     }
 }

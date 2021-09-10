@@ -1,11 +1,17 @@
-﻿using Shared.Events.Abstract;
+﻿using System;
+using Shared.Events.Abstract;
 
 namespace Shared.Events.Concrete
 {
     public class StockNotReservedEvent : IStockNotReservedEvent
     {
-        public int OrderId { get; set; }
+        public StockNotReservedEvent(Guid correlationId)
+        {
+            CorrelationId = correlationId;
+        }
 
-        public string Message { get; set; }
+        public string Reason { get; set; }
+
+        public Guid CorrelationId { get; }
     }
 }

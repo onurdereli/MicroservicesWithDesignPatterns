@@ -1,14 +1,18 @@
 ﻿using System;
 using Automatonymous;
+using Shared;
 using Shared.Events.Abstract;
+using Shared.Events.Concrete;
 
 namespace SagaStateMachineWorkerService.Models
 {
     public class OrderStateMachine : MassTransitStateMachine<OrderStateInstance>
     {
         public Event<IOrderCreatedRequestEvent> OrderCreatedRequestEvent { get; set; }
+        public Event<IStockReservedEvent> StockReservedEvent { get; set; }
 
         public State OrderCreated { get; set; }
+        public State StockReserved { get; set; }
 
         //İlk eventte her zaman business işlemlerinden sonra initial state'i OrderCreated state'ine geçmesi için yapılan işlemler
         public OrderStateMachine()
@@ -41,12 +45,34 @@ namespace SagaStateMachineWorkerService.Models
                     {
                         Console.WriteLine($"OrderCreatedRequestEvent before: {context.Instance}");
                     })
+                    .Publish(context => new OrderCreatedEvent(context.Instance.CorrelationId) { OrderItems = context.Data.OrderItems })
                     .TransitionTo(OrderCreated)
                     .Then(context =>
                     {
                         Console.WriteLine($"OrderCreatedRequestEvent after: {context.Instance}");
                     })
                 );
+
+            During(OrderCreated,
+                When(StockReservedEvent)
+                    .Then(context =>
+                    {
+                        Console.WriteLine($"StockReservedEvent before: {context.Instance}");
+                    })
+                    .TransitionTo(StockReserved)
+                    .Send(new Uri($"queue:{RabbitMqSettingsConst.PaymentStockReservedRequestQueueName }"), context => new StockReservedRequestPayment(context.Instance.CorrelationId)
+                    {
+                        OrderItems = context.Data.OrderItems,
+                        Payment = new PaymentMessage()
+                        {
+                            CardName = context.Instance.CardName,
+                            CardNumber = context.Instance.CardNumber,
+                            Cvv = context.Instance.Cvv,
+                            Expiration = context.Instance.Expiration,
+                            TotalPrice = context.Instance.TotalPrice
+                        },
+                        BuyerId = context.Instance.BuyerId
+                    }).Then(context => { Console.WriteLine($"StockReservedEvent After : {context.Instance}"); }));
         }
     }
 }

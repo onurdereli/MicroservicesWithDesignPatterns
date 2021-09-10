@@ -61,7 +61,7 @@ namespace Order.API.Services.Concrete
             {
                 orderCreatedRequestEvent.OrderItems.Add(new OrderItemMessage { Count = item.Count, ProductId = item.ProductId });
             });
-
+            
             var sendEndpoint = await _sendEndpointProvider.GetSendEndpoint(new Uri($"queue:{RabbitMqSettingsConst.OrderSaga}"));
 
             await sendEndpoint.Send<IOrderCreatedRequestEvent>(orderCreatedRequestEvent);

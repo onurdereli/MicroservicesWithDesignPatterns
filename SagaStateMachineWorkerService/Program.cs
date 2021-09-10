@@ -27,7 +27,7 @@ namespace SagaStateMachineWorkerService
                         {
                             opt.AddDbContext<DbContext, OrderStateDbContext>((provider, builder) =>
                             {
-                                builder.UseNpgsql(hostContext.Configuration.GetConnectionString("PostgreSql"), m =>
+                                builder.UseSqlServer(hostContext.Configuration.GetConnectionString("SqlServer"), m =>
                                 {
                                     m.MigrationsAssembly(Assembly.GetExecutingAssembly().GetName().Name);
                                 });

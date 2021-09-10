@@ -1,21 +1,18 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Shared.Events.Abstract;
 
 namespace Shared.Events.Concrete
 {
     public class StockReservedEvent: IStockReservedEvent
     {
-        public int OrderId { get; set; }
-
-        public string BuyerId { get; set; }
-
-        public PaymentMessage Payment { get; set; }
-
         public List<OrderItemMessage> OrderItems { get; set; }
 
-        public StockReservedEvent()
+        public StockReservedEvent(Guid correlationId)
         {
-            OrderItems = new List<OrderItemMessage>();
+            CorrelationId = correlationId;
         }
+
+        public Guid CorrelationId { get; }
     }
 }
