@@ -1,13 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using EventSourcing.Shared.Event;
 
 namespace EventSourcing.Shared
 {
-    class ProductCreatedEvent: IEvent
+    public class ProductCreatedEvent: IEvent
     {
         public Guid Id { get; set; }
 
