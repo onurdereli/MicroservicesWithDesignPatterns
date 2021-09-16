@@ -3,7 +3,7 @@ using MediatR;
 
 namespace EventSourcing.API.Commands
 {
-    public class ChangeProducNameCommand : IRequest
+    public class ChangeProductNameCommand : IRequest
     {
         public ChangeProductNameDto ChangeProductNameDto { get; set; }
     }

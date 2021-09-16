@@ -13,7 +13,7 @@ namespace EventSourcing.API.EventStores
     {
         protected readonly List<IEvent> Events;
 
-        private string _streamName { get; set; }
+        private string StreamName { get; set; }
 
         private readonly IEventStoreConnection _eventStoreConnection;
 
@@ -21,23 +21,23 @@ namespace EventSourcing.API.EventStores
         {
             Events = new List<IEvent>();
             _eventStoreConnection = eventStoreConnection;
-            _streamName = streamName;
+            StreamName = streamName;
         }
 
         public async Task SaveAsync()
         {
-            var newEvents = Events.Select(x =>
+            var newEvents = Events.Select(eventInfo =>
                 new EventData(
                     Guid.NewGuid(),
-                    x.GetType().Name,
+                    eventInfo.GetType().Name,
                     true,
-                    Encoding.UTF8.GetBytes(JsonSerializer.Serialize(x, inputType: x.GetType())),
-                    Encoding.UTF8.GetBytes(x.GetType().FullName))
+                    Encoding.UTF8.GetBytes(JsonSerializer.Serialize(eventInfo, inputType: eventInfo.GetType())),
+                    Encoding.UTF8.GetBytes(eventInfo.GetType().FullName))
                     )
                 .ToList();
-
-            await _eventStoreConnection.AppendToStreamAsync(_streamName, ExpectedVersion.Any, newEvents);
-
+            
+            await _eventStoreConnection.AppendToStreamAsync(StreamName, ExpectedVersion.Any, newEvents);
+            
             Events.Clear();
         }
     }
